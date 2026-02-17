@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Payroll Calculator</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#121a2b;
+      --muted:#93a4c7;
+      --text:#eaf0ff;
+      --line:rgba(255,255,255,.10);
+      --btn:#4f7cff;
+      --btn2:#2f5cff;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: radial-gradient(1200px 600px at 20% 10%, rgba(79,124,255,.25), transparent 60%),
+                  radial-gradient(1000px 500px at 90% 40%, rgba(47,92,255,.18), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      padding:24px;
+    }
+    .wrap{width:100%; max-width:720px;}
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius:18px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.45);
+      padding:28px;
+    }
+    .top{
+      display:flex;
+      gap:14px;
+      align-items:flex-start;
+      margin-bottom:18px;
+    }
+    .badge{
+      width:44px;height:44px;
+      border-radius:12px;
+      display:grid;
+      place-items:center;
+      background: rgba(79,124,255,.14);
+      border:1px solid rgba(79,124,255,.25);
+      flex:0 0 auto;
+      font-size:20px;
+    }
+    h1{
+      margin:0;
+      font-size:22px;
+      letter-spacing:.2px;
+    }
+    p{
+      margin:6px 0 0 0;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.5;
+    }
+
+    .drop{
+      margin-top:18px;
+      border:1px dashed rgba(255,255,255,.22);
+      border-radius:16px;
+      padding:18px;
+      background: rgba(255,255,255,.03);
+    }
+    .row{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+    }
+
+    /* Hide the ugly input */
+    input[type="file"]{display:none}
+
+    .filebtn{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:12px 14px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      cursor:pointer;
+      user-select:none;
+      transition: .15s ease;
+    }
+    .filebtn:hover{transform: translateY(-1px); background: rgba(255,255,255,.09);}
+    .filename{
+      color:var(--muted);
+      font-size:13px;
+      margin-top:10px;
+      word-break:break-word;
+    }
+
+    .actions{
+      margin-top:16px;
+      display:flex;
+      gap:12px;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+    }
+    button{
+      border:none;
+      cursor:pointer;
+      padding:12px 16px;
+      border-radius:12px;
+      font-weight:600;
+      color:white;
+      background: linear-gradient(180deg, var(--btn), var(--btn2));
+      box-shadow: 0 10px 24px rgba(79,124,255,.25);
+      transition:.15s ease;
+    }
+    button:disabled{
+      opacity:.55;
+      cursor:not-allowed;
+      box-shadow:none;
+    }
+    .hint{
+      margin-top:14px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      color:var(--muted);
+      font-size:12px;
+    }
+    .pill{
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      padding:6px 10px;
+      border-radius:999px;
+    }
+
+    .footer{
+      margin-top:14px;
+      text-align:center;
+      color:rgba(147,164,199,.75);
+      font-size:12px;
+    }
+    .spinner{
+      width:16px;height:16px;border-radius:50%;
+      border:2px solid rgba(255,255,255,.35);
+      border-top-color:white;
+      animation: spin 1s linear infinite;
+      display:none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width:520px){
+      .actions{justify-content:stretch}
+      button{width:100%}
+      .filebtn{width:100%; justify-content:center}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="top">
+        <div class="badge">📊</div>
+        <div>
+          <h1>Payroll Calculator</h1>
+          <p>Upload your payroll file (Excel/CSV). Gemini will calculate wages & headcounts by category.</p>
+        </div>
+      </div>
+
+      <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+        <div class="drop">
+          <div class="row">
+            <label class="filebtn" for="fileInput">
+              <span>Choose file</span>
+              <span style="opacity:.8;">.xlsx / .xls / .csv</span>
+            </label>
+
+            <input id="fileInput" type="file" name="file" accept=".xlsx,.xls,.csv" required />
+          </div>
+
+          <div id="fileName" class="filename">No file selected</div>
+
+          <div class="actions">
+            <button id="submitBtn" type="submit" disabled>
+              <span id="btnText">Upload & Calculate</span>
+              <span id="spin" class="spinner"></span>
+            </button>
+          </div>
+
+          <div class="hint">
+            <span class="pill">No uploads saved in GitHub (uploads/ ignored)</span>
+            <span class="pill">Key stored in .env (ignored)</span>
+          </div>
+        </div>
+      </form>
+
+      <div class="footer">Tip: If your file has multiple sheets, the app will pick payroll sheets automatically.</div>
+    </div>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById("fileInput");
+    const fileName = document.getElementById("fileName");
+    const submitBtn = document.getElementById("submitBtn");
+    const uploadForm = document.getElementById("uploadForm");
+    const spin = document.getElementById("spin");
+    const btnText = document.getElementById("btnText");
+
+    fileInput.addEventListener("change", () => {
+      const f = fileInput.files && fileInput.files[0];
+      if (!f) {
+        fileName.textContent = "No file selected";
+        submitBtn.disabled = true;
+        return;
+      }
+      fileName.textContent = `Selected: ${f.name}`;
+      submitBtn.disabled = false;
+    });
+
+    uploadForm.addEventListener("submit", () => {
+      submitBtn.disabled = true;
+      spin.style.display = "inline-block";
+      btnText.textContent = "Calculating...";
+    });
+  </script>
+</body>
+</html>
